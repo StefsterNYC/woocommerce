@@ -1,0 +1,211 @@
+<?php
+
+
+function check_product_category(){
+    foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
+        $product_id   = apply_filters( 'woocommerce_cart_item_product_id', $cart_item['product_id'], $cart_item, $cart_item_key );  
+        if( is_category_in_cart( $product_id ) ){
+            return  true;       
+        }
+    }
+    return false;
+}
+
+function is_category_in_cart( $product_id ){
+    return has_term( 136,'product_cat', get_post( $product_id ) );
+}
+
+
+
+//What fields to show?
+function barbell_custom_checkout_fields($fields){
+   
+
+    $fields['barbell_extra_fields'] = array(
+            
+
+            'barbell_text_field' => array(
+                         
+                          'type' => 'text',
+                      'required' => true,
+                         'label' => __( 'Cell Phone' )
+                ),
+             
+              
+              'barbell_dropdown' => array(
+                
+                          'type' => 'select',
+                       'options' => array( 
+
+                             'small' => __( 'Small'     ), 
+                            'medium' => __( 'Medium'    ), 
+                             'large' => __( 'Large'     ), 
+                           'x-large' => __( 'X-Large'   ),
+                          'xx-large' => __( 'XX-Large'  ),
+                         'xxx-large' => __( 'XXX-Large' ) 
+                    ),
+                'required'      => true,
+                'label' => __( 'Shirt Size' )
+                )
+            );
+    return $fields;
+}
+add_filter( 'woocommerce_checkout_fields', 'barbell_custom_checkout_fields' );
+
+
+//Show fields on Checkout
+function barbell_extra_checkout_fields(){
+   
+    $checkout = WC()->checkout(); ?>
+  <?php 
+       if( check_product_category() ){
+           echo '<div class="event-wrapper"><h3>Event Information</h3>';
+       foreach ( $checkout->checkout_fields['barbell_extra_fields'] as $key => $field ) : 
+          woocommerce_form_field( $key, $field, $checkout->get_value( $key ) );
+        endforeach; 
+        echo '</div>';
+      }
+  }
+
+add_action( 'woocommerce_after_order_notes' ,'barbell_extra_checkout_fields' );
+
+
+
+
+//Save the Data entered
+function barbell_save_extra_checkout_fields( $order_id, $posted ){
+    if( isset( $posted['barbell_text_field'] ) ) {
+        update_post_meta( $order_id, '_barbell_text_field', sanitize_text_field( $posted['barbell_text_field'] ) );
+    }
+    if( isset( $posted['barbell_dropdown'] ) && in_array( $posted['barbell_dropdown'],  array( 'small', 'medium', 'large', 'x-large', 'xx-large', 'xxx-large' ) ) ) {
+        update_post_meta( $order_id, '_barbell_dropdown', $posted['barbell_dropdown'] );
+    }
+}
+add_action( 'woocommerce_checkout_update_order_meta', 'barbell_save_extra_checkout_fields', 10, 2 );
+
+
+
+
+
+
+
+
+
+//Show the fields to user on Thank You page
+function barbell_display_order_data( $order_id ){  ?>
+    <h3><?php _e( 'Event Information ' ); ?></h3>
+    <table class="shop_table shop_table_responsive additional_info">
+        <tbody>
+            <tr>
+                <th><?php _e( 'Cell Phone:' ); ?></th>
+                <td><?php echo get_post_meta( $order_id, '_barbell_text_field', true ); ?></td>
+            </tr>
+            <tr>
+                <th><?php _e( 'Shirt Size:' ); ?></th>
+                <td><?php echo get_post_meta( $order_id, '_barbell_dropdown', true ); ?></td>
+            </tr>
+        </tbody>
+    </table>
+<?php }
+add_action( 'woocommerce_thankyou', 'barbell_display_order_data', 20 );
+add_action( 'woocommerce_view_order', 'barbell_display_order_data', 20 );
+
+
+
+
+
+
+
+//Let's display the information to Admin in the order details
+function barbell_display_order_data_in_admin( $order ){  ?>
+
+    <style type="text/css">
+        .special-wrap{
+            display: block;
+            width:100%;
+            clear:both;
+            padding:1em;
+            margin-top:2rem;
+            margin-bottom:1rem;
+            text-transform: capitalize;
+        }
+        .special-wrap h2,.special-wrap h3,.special-wrap h4{
+            font-size:18px;
+        }
+    </style>
+    <div class="order_data_column">
+        
+        <div class="special-wrap">
+        <h4><?php _e( 'Event Information', 'woocommerce' ); ?><a href="#" class="edit_address"><?php _e( 'Edit', 'woocommerce' ); ?></a></h4>
+        <div class="address">
+        <?php
+            echo '<p><strong>' . __( 'Cell Phone' ) . ':</strong>' . get_post_meta( $order->id, '_barbell_text_field', true ) . '</p>';
+            echo '<p><strong>' . __( 'Shirt Size' ) . ':</strong>' . get_post_meta( $order->id, '_barbell_dropdown', true ) . '</p>'; ?>
+        </div>
+        <div class="edit_address">
+            <?php woocommerce_wp_text_input( array( 'id' => '_barbell_text_field', 'label' => __( 'Phone field' ), 'wrapper_class' => '_billing_company_field' ) ); ?>
+            <?php woocommerce_wp_text_input( array( 'id' => '_barbell_dropdown',   'label' => __( 'Shirt size field' ), 'wrapper_class' => '_billing_company_field' ) ); ?>
+        </div>
+    </div>
+  </div>  
+<?php }
+add_action( 'woocommerce_admin_order_data_after_order_details', 'barbell_display_order_data_in_admin' );
+
+
+
+
+
+function barbell_save_extra_details( $post_id, $post ){
+    update_post_meta( $post_id, '_barbell_text_field', wc_clean( $_POST[ '_barbell_text_field' ] ) );
+    update_post_meta( $post_id, '_barbell_dropdown',   wc_clean( $_POST[ '_barbell_dropdown' ] ) );
+}
+add_action( 'woocommerce_process_shop_order_meta', 'barbell_save_extra_details', 45, 2 );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
