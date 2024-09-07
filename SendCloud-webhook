@@ -17,9 +17,9 @@ First, create a Custom Endpoint in WooCommerce
 In your theme’s functions.php file create an endpoint for the webhook URL. 
 This will act as the URL that SendCloud can send data to. 
 
-
+```php
 <?php
-	''''// Register the route
+	// Register the route
 		add_action('rest_api_init', function () {
 		    register_rest_route('sendcloud/v1', '/order-status-update/', array(
 		        'methods' => 'POST',
@@ -60,7 +60,7 @@ This will act as the URL that SendCloud can send data to.
 		    return new WP_Error('invalid_data', 'Invalid data received', array('status' => 400));
 		}
 
-		?>''''
+```
 		
 This code registers a new REST API endpoint at /wp-json/sendcloud/v1/order-status-update/, which you will provide to SendCloud as your webhook URL.
 Set the Webhook URL in SendCloud. Once you have the URL set up (e.g., https:/whateveryoursite.com/wp-json/sendcloud/v1/order-status-update/), provide this as the webhook URL. Obviously,I don't know your url so
