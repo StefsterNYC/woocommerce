@@ -1,20 +1,17 @@
-# WooCommerce Order Status via SendCloud
-
-## Here are the steps you’ll need to follow:
-
-### 1. Create a Webhook Listener in WooCommerce
-
-WooCommerce doesn’t have a built-in webhook listener for custom events like this, so you’ll need to create a custom webhook handler.
-
-**Here we go!**
-
-#### First, create a Custom Endpoint in WooCommerce
-
-In your theme’s `functions.php` file (preferably in your child theme), create an endpoint for the webhook URL. This will act as the URL that SendCloud can send data to.
-
-```php
 <?php
-// Register the route
+// WooCommerce Order Status via SendCloud
+// Here are the steps you’ll need to follow to do this
+
+// 1. Create a Webhook Listener in WooCommerce
+// Since Woo doesn’t have a built-in webhook listener for custom events like this, 
+// you’ll need to create a custom webhook handler.
+
+// Here we go!
+
+// First, create a Custom Endpoint in WooCommerce
+// In your theme’s functions.php file, create an endpoint for the webhook URL.
+// This will act as the URL that SendCloud can send data to.
+
 add_action('rest_api_init', function () {
     register_rest_route('sendcloud/v1', '/order-status-update/', array(
         'methods' => 'POST',
@@ -25,32 +22,36 @@ add_action('rest_api_init', function () {
 
 function handle_sendcloud_webhook(WP_REST_Request $request) {
     $data = $request->get_json_params();
-    
+
     // Log data to check what SendCloud sends
     error_log(print_r($data, true));
-    
+
     // Make sure that the request is valid by verifying the signature
     $signature = $request->get_header('Sendcloud-Signature');
     $payload = file_get_contents('php://input');
-    
+
     $expected_signature = hash_hmac('sha256', $payload, 'YOUR_SIGNATURE_KEY');
-    
+
     if (!hash_equals($expected_signature, $signature)) {
         return new WP_Error('invalid_signature', 'Signature does not match', array('status' => 403));
     }
-    
+
     // Update WooCommerce order based on data
     if (isset($data['order_id']) && isset($data['status'])) {
         $order_id = sanitize_text_field($data['order_id']);
         $order_status = sanitize_text_field($data['status']);
-    
+
         $order = wc_get_order($order_id);
-    
+
         if ($order && $order_status == 'shipped') {
             $order->update_status('completed');
             return new WP_REST_Response('Order updated', 200);
         }
     }
-    
+
     return new WP_Error('invalid_data', 'Invalid data received', array('status' => 400));
 }
+
+// This code registers a new REST API endpoint at /wp-json/sendcloud/v1/order-status-update/, 
+// which you will provide to SendCloud as your webhook URL.
+// Make sure to set the Webhook URL in SendCloud (e.g., https://yourdomain.com/wp-json/sendcloud/v1/order-status-update/).
