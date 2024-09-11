@@ -60,3 +60,7 @@
    } );
    
 
+// Do not add this as a file to your parent theme and do not add this as a file to your child theme. The proper way is to decidee which hooks you need to speed up your backend 
+// and apply them. I advise creating a folder structure of inc/hooks/wp/ or inc/hooks/wc/ then add a file called hooks.php inside the appropriate folder. Since this is WooCommerce I
+// advise placing a hook.php file inside inc/hooks/wc/hooks.php. Ensure you have started your file with <?php and then add the hook you want to add.
+// I take no responisibilty if your site crashes, you use these hooks at your own risk. I do not offer any support for free. It's all paid.
