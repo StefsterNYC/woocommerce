@@ -1,11 +1,11 @@
-<?php
+    <?php
 
-/**
- * Conditional file used to only show form when specific category ID has been adding to cart.
- *
- * @package WooCommerce/Hooks
- * @version 1.0.0
- */
+     /**
+      * Conditional file used to only show form when specific category ID has been adding to cart.
+      *
+      * @package WooCommerce/Hooks
+      * @version 1.0.0
+      */
  
  
  function check_product_category(){
